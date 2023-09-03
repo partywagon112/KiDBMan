@@ -1,0 +1,49 @@
+{
+    "meta": {
+        "version": 0
+    },
+    "name": "My Database Library",
+    "description": "A database of components",
+    "source": {
+        "type": "odbc",
+        "dsn": "",
+        "username": "",
+        "password": "",
+        "timeout_seconds": 2,
+        "connection_string": "DSN=Access_KiCad_libdb"
+    },
+    "libraries": [
+        {
+            "name": "TestTable",
+            "table": "TestTable",
+            "key": "Part ID",
+            "symbols": "Symbols",
+            "footprints": "Footprints",
+            "fields": [
+                {
+                    "column": "ID",
+                    "name": "ID",
+                    "visible_on_add": false,
+                    "visible_in_chooser": true,
+                    "show_name": true,
+                    "inherit_properties": true
+                },
+                {
+                    "column": "Not an ID",
+                    "name": "Not an ID",
+                    "visible_on_add": false,
+                    "visible_in_chooser": true,
+                    "show_name": true,
+                    "inherit_properties": true
+                }
+            ],
+            "properties": {
+                "description": "Description",
+                "footprint_filters": "Footprint Filters",
+                "keywords": "Keywords",
+                "exclude_from_bom": "No BOM",
+                "exclude_from_board": "Schematic Only"
+            }
+        }
+    ]
+}
