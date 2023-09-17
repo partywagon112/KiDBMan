@@ -1,9 +1,9 @@
 {
     "meta": {
-        "version": "0000"
+        "version": "0"
     },
-    "name": "Test 1",
-    "description": "A database of componentsA database of componentsA database of componentsThe last bit.",
+    "name": "Test 2",
+    "description": "The last bit.",
     "source": {
         "type": "odbc",
         "dsn": "",

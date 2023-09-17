@@ -1,5 +1,4 @@
-from kidbman import gui, libdb_reader
-import tkinter
+from kidbman import gui
 from tkinter.filedialog import askopenfilename
 
 class App():
@@ -7,8 +6,6 @@ class App():
         if filename == None:
             self.filename = askopenfilename(filetypes=[("KiCAD Database Library", "*.kicad_dbl")])
 
-        self.lib_meta = libdb_reader.DatabaseDescription.load(self.filename)
-        
     def start_dashboard(self):
-        self.dashboard = gui.Dashboard(self.lib_meta)
+        self.dashboard = gui.Dashboard(self.filename)
         self.dashboard.mainloop()

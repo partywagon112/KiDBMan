@@ -136,15 +136,15 @@ class DatabaseDescription(dict):
         """
         return [library['name'] for library in self["libraries"]]
 
-    @classmethod
-    def load(cls, filepath):
-        cls(filepath)
-        cls = read_Database(filepath)
-        return cls
+    # @classmethod
+    # def load(cls, filepath):
+    #     cls(filepath)
+    #     cls = read_Database(filepath)
+    #     return cls
 
     def save(self, filepath: str = None):
         self.filepath = filepath if filepath != None else self.filepath
-        self['libraries'] = [library.to_dict() for library in self['libraries']] 
+        self['libraries'] = [library.to_dict() if type(library) == Library else library for library in self['libraries']] 
         save_Database(self, self.filepath)
 
 def read_Database(filepath: str) -> dict:

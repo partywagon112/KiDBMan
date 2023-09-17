@@ -1,7 +1,7 @@
 import pyodbc 
 import pandas
 
-class LibaryDatabase():
+class LibraryDatabase():
     def __init__(self, connection_string, type: str=None, dsn: str=None, username: str = None, password: str = None, timeout_seconds: int = None, *args, **kwargs):
         self.type = type
         self.dsn = dsn
@@ -9,6 +9,7 @@ class LibaryDatabase():
         self.password = password
         self.timeout_seconds = timeout_seconds
         self.connection_string = connection_string
+        self.get_table_names()
 
     def __new_cursor(self) -> pyodbc.Cursor:
         connection = pyodbc.connect(self.connection_string)
