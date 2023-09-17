@@ -1,4 +1,4 @@
-# KiCad Database Manager (KiDBMAN)
+# KiCad Database Manager (KiDBMan)
 
 An idea for a KiCad database editor to make it easier to manage the *.json file that describes the library.
 

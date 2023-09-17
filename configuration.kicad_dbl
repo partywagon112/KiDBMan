@@ -2,21 +2,21 @@
     "meta": {
         "version": "0"
     },
-    "name": "Test",
-    "description": "Description",
+    "name": "New Database",
+    "description": "",
     "source": {
         "type": "odbc",
         "dsn": "",
         "username": "",
         "password": "",
         "timeout_seconds": 2,
-        "connection_string": "DSN=Access_KiCad_libdb"
+        "connection_string": "Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\\Users\\patri\\OneDrive\\Documents\\GitHub\\kidbman\\databases\\access_example.accdb"
     },
     "libraries": [
         {
             "name": "TestTable",
             "table": "TestTable",
-            "key": "Part ID",
+            "key": "Part Number",
             "symbols": "Symbols",
             "footprints": "Footprints",
             "fields": [

@@ -23,9 +23,9 @@ class Dashboard(ttk.Window):
     """
     Basic dashboard interface for the application.
     """
-    def __init__(self, filepath: str = None, title="KiCAD DBLib Man", themename="superhero", iconphoto='', size=None, position=None, minsize=None, maxsize=None, resizable=None, hdpi=True, scaling=None, transient=None, overrideredirect=False, alpha=1):
+    def __init__(self, filepath: str = None, title="KiDBMan - KiCad Database Library Manager", themename="superhero", iconphoto='', size=None, position=None, minsize=None, maxsize=None, resizable=None, hdpi=True, scaling=None, transient=None, overrideredirect=False, alpha=2):
         super().__init__(title, themename, iconphoto, size, position, minsize, maxsize, resizable, hdpi, scaling, transient, overrideredirect, alpha)        
-        
+
         self.filepath = filepath
 
         self.main_panel = ttk.Frame(master=self)
@@ -34,7 +34,7 @@ class Dashboard(ttk.Window):
         self.metadata:DatabaseDescription = DatabaseDescription.from_filepath(self.filepath) if self.filepath != None else DatabaseDescription.empty()
         self.connection: LibraryDatabase = None
 
-        self.filepath_label = ttk.Label(text=self.filepath if filepath != None else "")
+        self.filepath_label = ttk.Label(master=self.main_panel, text=self.filepath if filepath != None else "Create New Database")
         self.load_button = ttk.Button(master=self.main_panel, text='Load', command=self.load)
         self.database_config:DatabaseMetaFrame = DatabaseMetaFrame.from_metadata(master=self.main_panel, meta=self.metadata, padding=10)
         self.odbc_config:ConfigureSourceFrame = ConfigureSourceFrame.from_metadata(master=self.main_panel, meta=self.metadata, padding=10)
@@ -44,26 +44,29 @@ class Dashboard(ttk.Window):
         self.sync_button = ttk.Button(master=self.main_panel, text='Syncronoise', command=self.synchronise)
         
         # pack all the frames.
-        self.filepath_label.pack(fill=BOTH, padx=10, pady=5, expand=False)
-        self.load_button.pack(fill=BOTH, padx=10, pady=5)
+        self.filepath_label.pack(fill=BOTH, padx=10, pady=10, expand=False)
         self.database_config.pack(fill=BOTH, expand=True, padx=10, pady=10)
         self.odbc_config.pack(fill=BOTH, expand=True, padx=10, pady=10)
-        self.connect_button.pack(fill=BOTH, padx=10, pady=5)
-        self.connected_label.pack(fill=BOTH, padx=10, pady=2)     
-        self.save_button.pack(padx=10, pady=5, anchor='sw', fill='both')
-        self.main_panel.pack(side='left', anchor='w')
-        self.sync_button.pack(fill=BOTH, padx=10, pady=2)
+        self.load_button.pack(fill=BOTH, padx=10, pady=10, expand=True)
+        self.save_button.pack(padx=10, pady=5, expand=True, fill=BOTH)
+        self.connected_label.pack(fill=BOTH, padx=10, pady=5)     
+        self.connect_button.pack(fill=BOTH, padx=10, pady=5, expand=True)
+        self.main_panel.pack(side='left', anchor='w', padx=10, pady=10)
+        self.sync_button.pack(fill=BOTH, expand=True, padx=10, pady=5)
 
+        self.update()
 
     def update_library_frame(self):
-        if self.library_panel != None:
-            self.library_panel.destroy()
-        self.library_panel = LibrariesScrollFrame(master=self, metadata=self.metadata)
-        self.library_panel.pack(side='right', fill=BOTH, expand=YES, padx=10, pady=10, anchor='e')
+        if self.connection != None:
+            if self.library_panel != None:
+                self.library_panel.destroy()
+            self.library_panel = LibrariesScrollFrame(master=self, metadata=self.metadata)
+            self.library_panel.pack(side='right', fill=BOTH, expand=YES, padx=10, pady=10, anchor='e')
     
     def synchronise(self):
-        self.save_meta()
+        self.update()
         kidbman.synchronise(self.filepath)
+        self.save_meta()
 
     def connect(self):
         self.save_meta()
@@ -71,6 +74,7 @@ class Dashboard(ttk.Window):
         try:
             self.connection = LibraryDatabase.from_source(self.metadata['source'])
             self.connected_label.configure(text="Connected", bootstyle="success")
+            self.update_library_frame()
 
         except Exception as exception:
             print(exception)
@@ -98,10 +102,17 @@ class Dashboard(ttk.Window):
         self.metadata['source'].update(self.odbc_config.get())
         self.update_library_frame()
 
+        if self.metadata['source']['connection_string'] == "":
+            self.sync_button.configure(state='disabled')
+            self.connect_button.configure(state='disabled')
+        else:
+            self.sync_button.configure(state='enabled')
+            self.connect_button.configure(state='enabled')
+
     def save_meta(self):
         self.update()
         if self.filepath == None:
-            filepath = askopenfilename(filetypes=[("KiCAD Database Library", "*.kicad_dbl")])
+            filepath = asksaveasfilename(filetypes=[("KiCAD Database Library", "*.kicad_dbl")])
             if filepath == "":
                 return
             self.filepath = filepath
@@ -159,7 +170,7 @@ class DatabaseMetaFrame(ttk.Labelframe, GetableConfigFrame):
     Frame for basic database details.
     """
     def __init__(self, master, version: dict, name, description, *args, **kwargs):
-        super().__init__(text="Metadata", master=master, *args, **kwargs)
+        super().__init__(text="Setup", master=master, *args, **kwargs)
         self.name = FieldEntryFrame(master=self, field='Name', value=name)
         self.name.pack(padx=5, pady=5, anchor='w', expand=True, fill='both')
         self.description = FieldEntryFrame(master=self, field='Description', value=description)
