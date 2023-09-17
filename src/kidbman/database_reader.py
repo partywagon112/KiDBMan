@@ -1,5 +1,4 @@
 import pyodbc 
-import pandas
 
 class LibraryDatabase():
     def __init__(self, connection_string, type: str=None, dsn: str=None, username: str = None, password: str = None, timeout_seconds: int = None, *args, **kwargs):
