@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "KiDBMAN"
+version = "0.1.0"
+description = "A Python based configuration wizard for modifying the JSON database description."
+authors = [
+  {name = "Patrick Curtain", email = "patrick.curtain.112@outlook.com"},
+]
+license = {file = "LICENSE"}
+readme = "README.md"
+homepage = "https://github.com/partywagon112/KiDBMan"
+repository = "https://github.com/partywagon112/KiDBMan"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "pyodbc",
+  "ttkbootstrap",
+]
