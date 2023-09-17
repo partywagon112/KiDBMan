@@ -1,4 +1,4 @@
-from kidbman import App
+from kidbman.gui import App
 
 if __name__ == "__main__":
     app = App()

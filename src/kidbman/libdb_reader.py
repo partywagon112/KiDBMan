@@ -68,8 +68,8 @@ class Library():
     
     def to_dict(self) -> dict:
         library_dict = vars(self)
-        library_dict['fields'] = [field.to_dict() for field in library_dict['fields']]
-        library_dict['properties'] = library_dict['properties'].to_dict()
+        library_dict['fields'] = [field.to_dict() if type(field) != dict else field for field in library_dict['fields']]
+        library_dict['properties'] = library_dict['properties'].to_dict() if type(library_dict['properties']) != dict else library_dict['properties']
         return library_dict
 
     def get_field_names(self):

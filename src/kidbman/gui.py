@@ -2,13 +2,22 @@ from typing import Any
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from kidbman.database_reader import LibraryDatabase
-from kidbman.libdb_reader import DatabaseDescription
+from kidbman.libdb_reader import DatabaseDescription, Library
+from ttkbootstrap.scrolled import ScrolledFrame
 
+import kidbman
 import os
 
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 
 from abc import ABCMeta, abstractmethod, abstractclassmethod
+
+
+class App():
+    def start_dashboard(self):
+        self.dashboard = Dashboard()
+        self.dashboard.mainloop()
+
 
 class Dashboard(ttk.Window):
     """
@@ -16,40 +25,53 @@ class Dashboard(ttk.Window):
     """
     def __init__(self, filepath: str = None, title="KiCAD DBLib Man", themename="superhero", iconphoto='', size=None, position=None, minsize=None, maxsize=None, resizable=None, hdpi=True, scaling=None, transient=None, overrideredirect=False, alpha=1):
         super().__init__(title, themename, iconphoto, size, position, minsize, maxsize, resizable, hdpi, scaling, transient, overrideredirect, alpha)        
+        
         self.filepath = filepath
-        self.filepath_label = ttk.Label(text=self.filepath if filepath != None else "")
-        self.filepath_label.pack(fill=BOTH, padx=10, pady=5, expand=False)
+
+        self.main_panel = ttk.Frame(master=self)
+        self.library_panel = None
 
         self.metadata:DatabaseDescription = DatabaseDescription.from_filepath(self.filepath) if self.filepath != None else DatabaseDescription.empty()
+        self.connection: LibraryDatabase = None
 
-        self.mainleftframe = ttk.Frame(master=self)
-
-        self.load_button = ttk.Button(master=self.mainleftframe, text='Load', command=self.load)
+        self.filepath_label = ttk.Label(text=self.filepath if filepath != None else "")
+        self.load_button = ttk.Button(master=self.main_panel, text='Load', command=self.load)
+        self.database_config:DatabaseMetaFrame = DatabaseMetaFrame.from_metadata(master=self.main_panel, meta=self.metadata, padding=10)
+        self.odbc_config:ConfigureSourceFrame = ConfigureSourceFrame.from_metadata(master=self.main_panel, meta=self.metadata, padding=10)
+        self.connect_button = ttk.Button(master=self.main_panel, text='Save and Connect', command=self.connect)
+        self.connected_label = ttk.Label(master=self.main_panel, text="Not Connected")
+        self.save_button = ttk.Button(master=self.main_panel, text='Save As', command=self.save_meta_as)
+        self.sync_button = ttk.Button(master=self.main_panel, text='Syncronoise', command=self.synchronise)
+        
+        # pack all the frames.
+        self.filepath_label.pack(fill=BOTH, padx=10, pady=5, expand=False)
         self.load_button.pack(fill=BOTH, padx=10, pady=5)
-
-        self.database_config:DatabaseMetaFrame = DatabaseMetaFrame.from_metadata(master=self.mainleftframe, meta=self.metadata, padding=10)
         self.database_config.pack(fill=BOTH, expand=True, padx=10, pady=10)
-
-        self.odbc_config:ConfigureSourceFrame = ConfigureSourceFrame.from_metadata(master=self.mainleftframe, meta=self.metadata, padding=10)
         self.odbc_config.pack(fill=BOTH, expand=True, padx=10, pady=10)
-
-        self.connect_button = ttk.Button(master=self.mainleftframe, text='Save and Connect', command=self.connect)
         self.connect_button.pack(fill=BOTH, padx=10, pady=5)
-
-        self.connected_label = ttk.Label(master=self.mainleftframe, text="Not Connected")
-        self.connected_label.pack(fill=BOTH, padx=10, pady=2)          
-
-        self.save_button = ttk.Button(master=self.mainleftframe, text='Save As', command=self.save_meta_as)
+        self.connected_label.pack(fill=BOTH, padx=10, pady=2)     
         self.save_button.pack(padx=10, pady=5, anchor='sw', fill='both')
+        self.main_panel.pack(side='left', anchor='w')
+        self.sync_button.pack(fill=BOTH, padx=10, pady=2)
 
-        self.mainleftframe.pack(anchor='w')
+
+    def update_library_frame(self):
+        if self.library_panel != None:
+            self.library_panel.destroy()
+        self.library_panel = LibrariesScrollFrame(master=self, metadata=self.metadata)
+        self.library_panel.pack(side='right', fill=BOTH, expand=YES, padx=10, pady=10, anchor='e')
+    
+    def synchronise(self):
+        self.save_meta()
+        kidbman.synchronise(self.filepath)
 
     def connect(self):
-        self.update_meta()
         self.save_meta()
+        self.connection = None
         try:
-            self.connection = self.odbc_config.connect()
+            self.connection = LibraryDatabase.from_source(self.metadata['source'])
             self.connected_label.configure(text="Connected", bootstyle="success")
+
         except Exception as exception:
             print(exception)
             self.connected_label.configure(text="Failed!", bootstyle="danger")
@@ -68,15 +90,16 @@ class Dashboard(ttk.Window):
 
         self.connect()
 
-    def update_meta(self):
+    def update(self):
         """
         Updates all the metadata frames to match what is relevant.
         """
         self.metadata.update(self.database_config.get())
         self.metadata['source'].update(self.odbc_config.get())
+        self.update_library_frame()
 
     def save_meta(self):
-        self.update_meta()
+        self.update()
         if self.filepath == None:
             filepath = askopenfilename(filetypes=[("KiCAD Database Library", "*.kicad_dbl")])
             if filepath == "":
@@ -218,12 +241,6 @@ class ConfigureSourceFrame(ttk.Labelframe, GetableConfigFrame):
             *args,
             **kwargs
         )
-    
-    def connect(self):
-        """
-        Retreives the current configuration and attempts to bond to the SQL server.
-        """
-        return LibraryDatabase.from_source(self.get())
 
     def get(self):
         return {
@@ -250,3 +267,26 @@ class ConfigureSourceFrame(ttk.Labelframe, GetableConfigFrame):
         self.password.set(meta['source']['password'] if 'password' in meta['source'].keys() else "")
         self.timeout_seconds.set(int(meta['source']['timeout_seconds']) if 'timeout_seconds' in meta['source'].keys() else 2)
         self.connection_string.set(meta['source']['connection_string'] if 'connection_string' in meta['source'] else "")
+
+
+class LibrariesScrollFrame(ttk.Labelframe):
+    """
+    Creates a list of libraries based on a database connection. At least requires 
+    """
+    def __init__(self, master, metadata: DatabaseDescription, connection: LibraryDatabase = None, *args, **kwargs):
+        super().__init__(master=master, text="Libraries", *args, **kwargs)
+
+        self.metadata = metadata
+
+        self.library_list = ScrolledFrame(master=self, autohide=True)
+        self.library_list.pack(fill=BOTH, padx=10, pady=5, expand=True, anchor='n')
+        
+        connected_tables = connection.get_table_names() if connection != None else []
+        described_tables = self.metadata.get_library_names()
+
+        self.library_buttons = {library_name: ttk.Button(master=self.library_list, text=library_name, command=lambda: self.edit_library(library_name), bootstyle="danger") for library_name in list(set(connected_tables + described_tables))}
+        [button.pack(fill=BOTH, padx=10, pady=5) for button in self.library_buttons.values()]
+        [button.configure(bootstyle="success") for button in described_tables if button in connected_tables]
+
+    def edit_library(self, button):
+        print(button)
