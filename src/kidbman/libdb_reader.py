@@ -94,9 +94,31 @@ class Library():
         return [Field(field) for field in self.fields]
 
 class DatabaseDescription(dict):
-    def __init__(self, filepath, *args, **kwargs):
-        self.filepath = filepath
-        super().update(read_Database(self.filepath))
+    def __init__(self, schema: dict, *args, **kwargs):
+        super().update(schema)
+    
+    @classmethod
+    def empty(cls):
+        return cls(schema = {
+            "meta": {
+                "version": 0
+            },
+            "name": "New Database",
+            "description": "",
+            "source": {
+                "type" : "",
+                "dsn": "",
+                "username": "",
+                "password": "",
+                "timeout_seconds": 2,
+                "connection_string": ""
+            },
+            "libraries": []
+        })
+    
+    @classmethod
+    def from_filepath(cls, filepath):
+        return cls(schema = read_Database(filepath))
 
     def configure_source(self, type, dsn, username, password, timeout_seconds, connection_string):
         self["source"] = {
@@ -142,10 +164,10 @@ class DatabaseDescription(dict):
     #     cls = read_Database(filepath)
     #     return cls
 
-    def save(self, filepath: str = None):
-        self.filepath = filepath if filepath != None else self.filepath
+    def save(self, filepath: str):
+        # self.filepath = filepath if filepath != None else self.filepath
         self['libraries'] = [library.to_dict() if type(library) == Library else library for library in self['libraries']] 
-        save_Database(self, self.filepath)
+        save_Database(self, filepath)
 
 def read_Database(filepath: str) -> dict:
     with open(filepath) as Database_file:

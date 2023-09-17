@@ -4,6 +4,8 @@ from ttkbootstrap.constants import *
 from kidbman.database_reader import LibraryDatabase
 from kidbman.libdb_reader import DatabaseDescription
 
+import os
+
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 
 from abc import ABCMeta, abstractmethod, abstractclassmethod
@@ -12,10 +14,13 @@ class Dashboard(ttk.Window):
     """
     Basic dashboard interface for the application.
     """
-    def __init__(self, filepath = None, title="KiCAD DBLib Man", themename="superhero", iconphoto='', size=None, position=None, minsize=None, maxsize=None, resizable=None, hdpi=True, scaling=None, transient=None, overrideredirect=False, alpha=1):
+    def __init__(self, filepath: str = None, title="KiCAD DBLib Man", themename="superhero", iconphoto='', size=None, position=None, minsize=None, maxsize=None, resizable=None, hdpi=True, scaling=None, transient=None, overrideredirect=False, alpha=1):
         super().__init__(title, themename, iconphoto, size, position, minsize, maxsize, resizable, hdpi, scaling, transient, overrideredirect, alpha)        
         self.filepath = filepath
-        self.metadata:DatabaseDescription = DatabaseDescription(filepath)
+        self.filepath_label = ttk.Label(text=self.filepath if filepath != None else "")
+        self.filepath_label.pack(fill=BOTH, padx=10, pady=5, expand=False)
+
+        self.metadata:DatabaseDescription = DatabaseDescription.from_filepath(self.filepath) if self.filepath != None else DatabaseDescription.empty()
 
         self.mainleftframe = ttk.Frame(master=self)
 
@@ -39,12 +44,9 @@ class Dashboard(ttk.Window):
 
         self.mainleftframe.pack(anchor='w')
 
-        # self.mainrightframe = ttk.Frame(master=self)
-        # self.libraryframe = LibrariesManager()
-
     def connect(self):
         self.update_meta()
-        self.metadata.save(self.filepath)
+        self.save_meta()
         try:
             self.connection = self.odbc_config.connect()
             self.connected_label.configure(text="Connected", bootstyle="success")
@@ -53,8 +55,13 @@ class Dashboard(ttk.Window):
             self.connected_label.configure(text="Failed!", bootstyle="danger")
     
     def load(self):
-        self.filepath = askopenfilename(filetypes=[("KiCAD Database Library", "*.kicad_dbl")])
-        self.metadata:DatabaseDescription = DatabaseDescription(self.filepath)
+        filepath = askopenfilename(filetypes=[("KiCAD Database Library", "*.kicad_dbl")])
+        if filepath == "":
+            return
+        self.filepath = filepath
+        self.filepath_label.configure(text=os.path.basename(filepath))
+
+        self.metadata:DatabaseDescription = DatabaseDescription.from_filepath(self.filepath)
         
         self.database_config.set_from_metadata(self.metadata)
         self.odbc_config.set_from_metadata(self.metadata)
@@ -70,6 +77,11 @@ class Dashboard(ttk.Window):
 
     def save_meta(self):
         self.update_meta()
+        if self.filepath == None:
+            filepath = askopenfilename(filetypes=[("KiCAD Database Library", "*.kicad_dbl")])
+            if filepath == "":
+                return
+            self.filepath = filepath
         self.metadata.save(self.filepath)
     
     def save_meta_as(self):
@@ -113,6 +125,7 @@ class FieldEntryFrame(ttk.Frame):
     
     def set(self, value):
         # self.entry_box.delete(first=ttk.FIRST, last=ttk.END)
+        self.entry_box.delete(0, ttk.END)
         self.entry_box.insert(0, value)
 
     def get(self):
