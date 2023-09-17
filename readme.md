@@ -7,8 +7,12 @@ Includes basic examples and pulls from the KiCad-libdb example database reposito
 ![Front Panel when starting with library](https://github.com/partywagon112/KiDBMan/blob/main/images/front_panel.png)
 
 # What Works so Far
-Can generate schememas and synchronise the database to the JSON, however want to add in a checkbox system to select what is visible, 
-add/edit fields potentially?
+Can generate schememas and synchronise the database to the JSON. Have not got the library button doing anything intelligent yet.
+
+# Big Issues
+Generally, the code for managing the schema is a bit messy - was trying something out.
+
+Pressing synchronise BURNS DOWN THE WHOLE FRAME, which causes a brief 'blip'. Not a big issue per say, but a bit annoying - not sure how to do that more elegantly.
 
 # Future
 Need a wizard to help construct database connection strings, as this is something that new users of the KiCad database library
