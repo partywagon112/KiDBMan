@@ -41,7 +41,7 @@ class Dashboard(ttk.Window):
         self.connect_button = ttk.Button(master=self.main_panel, text='Save and Connect', command=self.connect)
         self.connected_label = ttk.Label(master=self.main_panel, text="Not Connected")
         self.save_button = ttk.Button(master=self.main_panel, text='Save As', command=self.save_meta_as)
-        self.sync_button = ttk.Button(master=self.main_panel, text='Syncronoise', command=self.synchronise)
+        self.sync_button = ttk.Button(master=self.main_panel, text='Sync Database', command=self.sync)
         
         # pack all the frames.
         self.filepath_label.pack(fill=BOTH, padx=10, pady=10, expand=False)
@@ -60,12 +60,12 @@ class Dashboard(ttk.Window):
         if self.connection != None:
             if self.library_panel != None:
                 self.library_panel.destroy()
-            self.library_panel = LibrariesScrollFrame(master=self, metadata=self.metadata)
+            self.library_panel = LibrariesScrollFrame(master=self, metadata=self.metadata, connection=self.connection)
             self.library_panel.pack(side='right', fill=BOTH, expand=YES, padx=10, pady=10, anchor='e')
     
-    def synchronise(self):
+    def sync(self):
         self.update()
-        kidbman.synchronise(self.filepath)
+        kidbman.sync(self.filepath)
         self.save_meta()
 
     def connect(self):
@@ -284,7 +284,7 @@ class LibrariesScrollFrame(ttk.Labelframe):
     """
     Creates a list of libraries based on a database connection. At least requires 
     """
-    def __init__(self, master, metadata: DatabaseDescription, connection: LibraryDatabase = None, *args, **kwargs):
+    def __init__(self, master, metadata: DatabaseDescription, connection: LibraryDatabase, *args, **kwargs):
         super().__init__(master=master, text="Libraries", *args, **kwargs)
 
         self.metadata = metadata
@@ -292,12 +292,13 @@ class LibrariesScrollFrame(ttk.Labelframe):
         self.library_list = ScrolledFrame(master=self, autohide=True)
         self.library_list.pack(fill=BOTH, padx=10, pady=5, expand=True, anchor='n')
         
-        connected_tables = connection.get_table_names() if connection != None else []
+        connected_tables = connection.get_table_names()
         described_tables = self.metadata.get_library_names()
 
         self.library_buttons = {library_name: ttk.Button(master=self.library_list, text=library_name, command=lambda: self.edit_library(library_name), bootstyle="danger") for library_name in list(set(connected_tables + described_tables))}
-        [button.pack(fill=BOTH, padx=10, pady=5) for button in self.library_buttons.values()]
-        [button.configure(bootstyle="success") for button in described_tables if button in connected_tables]
+        [button.pack(fill=BOTH, padx=10, pady=10) for button in self.library_buttons.values()]
+
+        [button.configure(bootstyle="success") if library_name in connected_tables else None for library_name, button in self.library_buttons.items()]
 
     def edit_library(self, button):
         print(button)
